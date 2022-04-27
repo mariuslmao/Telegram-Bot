@@ -1,0 +1,69 @@
+
+import requests
+import json
+from time import sleep
+
+# Parameter:
+base_url = "https://api.telegram.org/bot<<bot token>>/"
+offset = 0
+user_id = 0
+#-----------------------------------------------------------------------------------------------------------------------
+def start_get_offset():  # getting the newest offset
+    global offset
+
+    resp = requests.get(base_url + "getUpdates?offset=-1")
+    data = resp.json()
+    offset = data["result"][0]["update_id"] + 1
+    print(str(offset) + 'erstes')
+    return True
+
+def activate(key, name):  #  this function returns True if its triggered
+    global offset
+    print(str(offset) + 'zwei')
+    resp = requests.get(base_url + "getUpdates?offset=" + str(offset))
+    data = resp.json()
+
+    try:
+        for x in range(100):
+            offset = data["result"][x]["update_id"] + 1
+            if data['result'][x]['message']['text'] == key:
+                send_msg('ich starte jetzt: ' + name)
+                return True
+            else:
+                sleep(2.1)
+                return activate(key, name)
+    except:
+        sleep(2.1)
+        return activate(key, name)
+
+def read_msg():  # This reads messages and returns them (
+    global offset
+    print(str(offset) + 'drei')
+    resp = requests.get(base_url + "getUpdates?offset=" + str(offset))
+    data = resp.json()
+
+    try:
+        for x in range(100):
+            print(x)
+            offset = data["result"][x]["update_id"] + 1
+            return data['result'][x]['message']['text']
+    except:
+        sleep(2.1)
+        return read_msg()
+
+def send_msg(print):  # sends messages
+    parameters = {
+        "chat_id": "YOUR CHAT ID",                                    # Your Chat_id !!!!!!!!
+        "text": print
+    }
+    resp = requests.get(base_url + 'sendMessage', data=parameters)
+
+def input(print):  # like Pythons input, but the Telegram User can use it
+    global offset
+    send_msg(print)
+    return read_msg()
+
+#------------------------------------------------------------------------------------------------------------------------------
+
+start_get_offset()
+if activate('/start', 'Programm'):
